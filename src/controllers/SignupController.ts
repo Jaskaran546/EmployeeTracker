@@ -3,38 +3,57 @@ import { Employees } from "../models/EmployeeModel";
 import bcrypt from "bcrypt";
 import { error } from "console";
 import { Op } from "sequelize";
+import jwt, { JwtPayload, Secret, SignOptions } from "jsonwebtoken";
+import { sendingMail } from "../mailer/mailing";
+import { generateToken } from "../jwt/jwt";
 
 export const signup = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<any> => {
   try {
-    let { email, username, password, phone, country, address } = req.body;
-    const emailInUse = await Employees.findOne({
-      where: { email },
-    });
-    const usernameInUse = await Employees.findOne({
-      where: { username },
-    });
+    let { email, username, password, phone, country, address, isVerified } =
+      req.body;
+    console.log("req.body", req.body);
 
-    if (emailInUse && usernameInUse) {
-      throw new Error("Email/Username already in use ");
-    }
-    // const hash = bcrypt.hashSync(password, 12);
-    // password = hash;
-
-    await Employees.create({
-      email,
+    const data = {
       username,
-      password,
+      email,
       phone,
       country,
       address,
-    }).catch((error: any) => {
-      throw new Error(error);
-    });
-    res.send({ message: "Success" });
+      password,
+      isVerified,
+    };
+
+    const employee = await Employees.create(data);
+    console.log("employee.dataValues", employee.dataValues);
+
+    if (employee) {
+      let token = await generateToken(data);
+
+      //if token is created, send the user a mail
+      if (token) {
+
+      //send email to the user
+      //with the function coming from the mailing.js file
+      //message containing the user id and the token to help verify their email
+      sendingMail({
+        from: "jaskaran.singh@antiersolutions.com",
+        to: `${email}`,
+        subject: "Account Verification Link",
+        text: `Hello, ${employee.dataValues.username} Please verify your email by
+              clicking this link :
+              http://localhost:8080/api/users/verify-email/ `,
+      });
+
+      return res.status(201).send(employee);
+      //if token is not created, send a status of 400
+      } else {
+        return res.status(400).send("Token not created");
+      }
+    }
   } catch (error: any) {
     res.send({ message: error.message });
   }
@@ -58,13 +77,11 @@ export const login = async (
       },
     });
 
-    console.log("user", user);
-    console.log("user?.dataValues.password", user?.dataValues.password);
-
     const passwordMatch = await bcrypt.compare(
       password,
       user?.dataValues.password
     );
+
     if (!passwordMatch) {
       throw new Error("Wrong Credentials");
     }

@@ -1,8 +1,10 @@
 import { configDotenv } from "dotenv";
-import { Sequelize } from "sequelize";
+import { DataTypes, Model, Sequelize } from "sequelize";
+import { Employees } from "../models/EmployeeModel";
+
 
 configDotenv();
-
+console.log('process.env.DATABASE', process.env.DATABASE)
 export const sequelize = new Sequelize(
   process.env.DATABASE as any,
   process.env.DB_USER as any,

@@ -1,10 +1,14 @@
 import app from "./app";
 import config from "./config/config";
 import { sequelize } from "./config/db.config";
-import { Employees } from "./models/EmployeeModel";
 
-app.listen(config.port, () => {
-  console.log(`Server running on port ${config.port}`);
-});
+const init = async () => {
+  sequelize.sync({ force: true });
+  console.log("All models were synchronized successfully.");
 
-sequelize.sync()
+  app.listen(config.port, async () => {
+    console.log(`Server running on port ${config.port}`);
+    console.log("process.env.DB_HOST", process.env.DB_HOST);
+  });
+};
+init();

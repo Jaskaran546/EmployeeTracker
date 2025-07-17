@@ -1,4 +1,4 @@
-import { DataTypes, DATE } from "sequelize";
+import { DataTypes } from "sequelize";
 import { sequelize } from "../config/db.config";
 import bcrypt from "bcrypt";
 import { configDotenv } from "dotenv";
@@ -38,11 +38,12 @@ export const Employees = sequelize.define(
     address: {
       type: DataTypes.STRING,
     },
+    
   },
   { timestamps: true }
 );
 
-Employees.beforeCreate(async (user: any, options) => {
+Employees.beforeCreate(async (user: any) => {
   const hash = bcrypt.hashSync(user.password, Number(process.env.SALT_ROUNDS));
   user.password = hash;
 });
