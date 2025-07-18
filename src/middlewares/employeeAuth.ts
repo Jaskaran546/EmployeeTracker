@@ -13,19 +13,18 @@ export const signupValidation = async (
     username,
     email,
   };
+  // const { error, value } = validation.validate(payload);
+
   try {
-    console.log("check validation");
-    const emailInUse = await Employees.findOne({
-      where: { email },
-    });
-    const usernameInUse = await Employees.findOne({
-      where: { username },
+    const existingUser = await Employees.findOne({
+      where: {
+        [Op.or]: [{ username: username }, { email: email }],
+      },
     });
 
-    if (emailInUse && usernameInUse) {
+    if (existingUser) {
       return res.status(400).json("Email/Username already in use ");
     }
-    const { error, value } = validation.validate(payload);
     next();
   } catch (error) {
     console.log("error---------", error);
@@ -36,7 +35,7 @@ export const loginValidation = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<any> => {
   let { login }: any = req.body;
   try {
     const user = await Employees.findOne({

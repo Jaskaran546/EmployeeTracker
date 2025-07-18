@@ -3,9 +3,8 @@ import { Employees } from "../models/EmployeeModel";
 import bcrypt from "bcrypt";
 import { error } from "console";
 import { Op } from "sequelize";
-import jwt, { JwtPayload, Secret, SignOptions } from "jsonwebtoken";
 import { sendingMail } from "../mailer/mailing";
-import { generateToken } from "../jwt/jwt";
+import { generateToken, validateToken } from "../jwt/jwt";
 
 export const signup = async (
   req: Request,
@@ -15,7 +14,6 @@ export const signup = async (
   try {
     let { email, username, password, phone, country, address, isVerified } =
       req.body;
-    console.log("req.body", req.body);
 
     const data = {
       username,
@@ -28,37 +26,30 @@ export const signup = async (
     };
 
     const employee = await Employees.create(data);
-    console.log("employee.dataValues", employee.dataValues);
 
     if (employee) {
       let token = await generateToken(data);
 
       //if token is created, send the user a mail
       if (token) {
-
-      //send email to the user
-      //with the function coming from the mailing.js file
-      //message containing the user id and the token to help verify their email
-      sendingMail({
-        from: "jaskaran.singh@antiersolutions.com",
-        to: `${email}`,
-        subject: "Account Verification Link",
-        text: `Hello, ${employee.dataValues.username} Please verify your email by
+        sendingMail({
+          from: "no-reply@employeeTracker.com",
+          to: `${email}`,
+          subject: "Account Verification Link",
+          text: `Hello, ${employee.dataValues.username} Please verify your email by
               clicking this link :
-              http://localhost:8080/api/users/verify-email/ `,
-      });
+              http://localhost:5000/api/verify-email/?token=${token}`,
+        });
 
-      return res.status(201).send(employee);
-      //if token is not created, send a status of 400
+        return res.status(201).send(employee);
+        //if token is not created, send a status of 400
       } else {
-        return res.status(400).send("Token not created");
+        return res.status(400).send("token not created");
       }
     }
   } catch (error: any) {
-    res.send({ message: error.message });
+    res.status(500).json({ message: "Internal server error" });
   }
-  res.send;
-  console.log("error", error);
 };
 
 export const login = async (
@@ -88,6 +79,36 @@ export const login = async (
     res.status(200).json({ message: "Login Successful" });
   } catch (error: any) {
     console.log("error", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const verifyEmailLink = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const token: any = req.query.token;
+
+    const tokenPayload = validateToken(token);
+
+    const user = await Employees.findOne({
+      where: {
+        [Op.or]: [
+          { username: (await tokenPayload).username },
+          { email: (await tokenPayload).email },
+        ],
+      },
+    });
+    await user?.update({ isVerified: true });
+    console.log("user", user);
+    if (user) {
+      res
+        .status(200)
+        .json({ message: "User Verified", email: await user.dataValues.email });
+    }
+  } catch (error: any) {
     res.status(500).json({ message: "Internal server error" });
   }
 };

@@ -25,6 +25,7 @@ export const sendingMail = async ({ from, to, subject, text }: any) => {
     //return the Transporter variable which has the sendMail method to send the mail
     //which is within the mailOptions
     return await Transporter.sendMail(mailOptions);
+    console.log('Done');
   } catch (error) {
     console.log(error);
   }

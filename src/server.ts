@@ -3,7 +3,7 @@ import config from "./config/config";
 import { sequelize } from "./config/db.config";
 
 const init = async () => {
-  sequelize.sync({ force: true });
+  sequelize.sync();
   console.log("All models were synchronized successfully.");
 
   app.listen(config.port, async () => {
