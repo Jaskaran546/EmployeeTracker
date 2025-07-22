@@ -38,12 +38,26 @@ export const Employees = sequelize.define(
     address: {
       type: DataTypes.STRING,
     },
-    
+    resetOtp: {
+      type: DataTypes.STRING,
+      defaultValue: 0,
+    },
+    otpExpiry: {
+      type: DataTypes.DATE,
+      defaultValue: new Date(),
+    },
   },
-  { timestamps: true }
+  { timestamps: true,
+    
+   }
 );
 
 Employees.beforeCreate(async (user: any) => {
+  const hash = bcrypt.hashSync(user.password, Number(process.env.SALT_ROUNDS));
+  user.password = hash;
+});
+
+Employees.beforeUpdate(async (user: any) => {
   const hash = bcrypt.hashSync(user.password, Number(process.env.SALT_ROUNDS));
   user.password = hash;
 });

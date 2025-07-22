@@ -1,32 +1,84 @@
+import { error } from "console";
 import { configDotenv } from "dotenv";
+import { Jwt } from "jsonwebtoken";
 import nodemailer from "nodemailer";
 
 configDotenv();
 //function to send email to the user
-export const sendingMail = async ({ from, to, subject, text }: any) => {
+
+export const transporterInstance = () => {
+  return nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: Number(process.env.EMAIL_PORT),
+  });
+};
+
+export interface MailOptions {
+  from?: string;
+  to: string;
+  subject?: string;
+  text?: string;
+  html?: string;
+}
+
+export const sendingMail = async (options: MailOptions) => {
   try {
     let mailOptions = {
-      from,
-      to,
-      subject,
-      text,
-      html: `<p>Hello, verify your email address by clicking on this</p>
-        <br>`,
+      from: process.env.FROM,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
     };
 
-    //asign createTransport method in nodemailer to a variable
-    //service: to determine which email platform to use
-    //auth contains the senders email and password which are all saved in the .env
-    const Transporter = nodemailer.createTransport({
-      host: "smtp.freesmtpservers.com",
-      port: 25,
-    });
+    const Transporter = await transporterInstance();
 
-    //return the Transporter variable which has the sendMail method to send the mail
-    //which is within the mailOptions
     return await Transporter.sendMail(mailOptions);
-    console.log('Done');
   } catch (error) {
     console.log(error);
   }
 };
+
+export const sendVerificationMail = async (employee: any, token: Jwt) => {
+  let mailOptions: MailOptions = {
+    to: employee?.dataValues.email,
+    subject: "Account Verification Link",
+    text: `Hello, ${employee.dataValues.username} Please verify your email by
+              clicking this link :
+              http://localhost:${process.env.PORT}/api/verify-email/?token=${token}`,
+  };
+
+  await sendingMail(mailOptions).catch((error: any) => {
+    console.log("error", error);
+    return error;
+  });
+};
+
+export const sendForgetPasswordMail = async (employee: any, token: Jwt) => {
+  let mailOptions: MailOptions = {
+    to: employee?.dataValues.email,
+    subject: "Account Verification Link",
+    text: `Hello, ${employee.dataValues.username} Please verify your email by
+              clicking this link :
+              http://localhost:${process.env.PORT}/api/verify-email/?token=${token}`,
+  };
+  await sendingMail(mailOptions);
+};
+
+export async function sendOtpNotification(userMail: any, user: any) {
+  let mailOptions: MailOptions = {
+    to: userMail,
+    subject: "OTP to Reset password",
+    text: `Your OTP for password reset is: ${user?.dataValues.resetOtp}. 
+        Do not share your OTP with anyone else. Validity 5 Mins`,
+  };
+  try {
+    await sendingMail(mailOptions).catch((error: any) => {
+      console.log("error", error);
+      return error;
+    });
+    console.log("OTP email sent to:", userMail);
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
+  }
+}
