@@ -24,6 +24,7 @@
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.0.10",
     "@types/nodemailer": "^6.4.17",
     "dotenv": "^17.0.1",
@@ -43,6 +44,7 @@
     "crypto": "^1.0.1",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "mysql2": "^3.14.1",
     "nodemailer": "^7.0.5",
     "sequelize": "^6.37.7"

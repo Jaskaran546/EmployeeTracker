@@ -1,4 +1,3 @@
-import { error } from "console";
 import { configDotenv } from "dotenv";
 import { Jwt } from "jsonwebtoken";
 import nodemailer from "nodemailer";

@@ -21,7 +21,7 @@ export const Employees = sequelize.define(
     username: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: { max: 16, min: 4 },
+      validate: { max: 16, min: 4, isAlphanumeric: true },
       unique: true,
     },
     password: {
@@ -31,12 +31,18 @@ export const Employees = sequelize.define(
     },
     phone: {
       type: DataTypes.INTEGER,
+      validate: { max: 9, min: 9 },
     },
     country: {
       type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isAlpha: true,
+      },
     },
     address: {
       type: DataTypes.STRING,
+      allowNull: false,
     },
     resetOtp: {
       type: DataTypes.STRING,
@@ -46,18 +52,17 @@ export const Employees = sequelize.define(
       type: DataTypes.DATE,
       defaultValue: new Date(),
     },
+    loginjwtToken: {
+      type: DataTypes.STRING,
+    },
+    profilePic: {
+      type: DataTypes.STRING,
+    },
   },
-  { timestamps: true,
-    
-   }
+  { timestamps: true }
 );
 
 Employees.beforeCreate(async (user: any) => {
-  const hash = bcrypt.hashSync(user.password, Number(process.env.SALT_ROUNDS));
-  user.password = hash;
-});
-
-Employees.beforeUpdate(async (user: any) => {
   const hash = bcrypt.hashSync(user.password, Number(process.env.SALT_ROUNDS));
   user.password = hash;
 });
